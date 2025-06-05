@@ -1,0 +1,17 @@
+[package]
+name = "grpc-client"
+version = "0.1.0"
+authors = ["Your Name <YourName@yourdomain.com>"]
+edition = "2024"
+license = "MIT"
+documentation = "https://docs.rs/"
+repository = "https://github.com/TODO"
+homepage = "https://github.com/TODO"
+description = """
+
+"""
+readme = "README.md"
+categories = ["development-tools"]
+keywords = []
+
+[dependencies]
