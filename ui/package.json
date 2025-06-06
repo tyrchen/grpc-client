@@ -26,23 +26,25 @@
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.511.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "immer": "^10.1.1",
+    "lucide-react": "^0.513.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-resizable-panels": "^3.0.2",
     "recharts": "^2.15.3",
     "tailwind-merge": "^3.2.0",
-    "zustand": "^5.0.3"
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
     "@tailwindcss/vite": "^4.1.5",
     "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^22.15.18",
-    "@types/react": "^19.1.6",
-    "@types/react-dom": "^19.1.5",
-    "@types/recharts": "^2.0.1",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.1",
+    "@types/recharts": "^1.8.29",
     "@types/uuid": "^10.0.0",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^4.5.1",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -52,9 +54,9 @@
     "tailwindcss": "^4.1.5",
     "tw-animate-css": "^1.2.8",
     "typescript": "5.8.3",
-    "typescript-eslint": "^8.26.1",
+    "typescript-eslint": "^8.33.0",
     "vite": "^6.3.4",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.1.2"
+    "vitest": "^3.2.2"
   }
 }

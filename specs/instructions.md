@@ -70,3 +70,15 @@ Please implement phase 4.2 tasks
 Before entering 4.3, can you help to add swagger integration for APIs. Please follow @axum.mdc rules.
 
 curl got errors on listing user-service defined in @app.yml . grpc-client works as expected, please fix it.
+
+Ok I've massively refactored the code please see @client.rs @handlers.rs and @main.rs to make the @client.rs code more sharable between web and shell cmd. please take a deep look and update your memory regarding them. Now let's move to UI work.
+
+Make the UI three columns:
+
+- left sidebar: select server, select service, select methods. Exclude not show reflection service.
+- mid sidebar: input form. Allow user to input request based on request schema
+- main content: req/res list, each item panel contain the request and response.
+
+UserService should have a list of methods, but UI says no methods. Please fix it.
+
+Please put header input like the attached image. allow user input one key / value (no need for description. If they want to add more, they could click a + button to add a new row of inputs. These will be aggregated to an input object.

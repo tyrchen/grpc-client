@@ -1,6 +1,9 @@
 build:
 	@cargo build
 
+ui:
+	@cd ui && yarn dev
+
 test:
 	@cargo nextest run --all-features
 
@@ -14,4 +17,4 @@ release:
 update-submodule:
 	@git submodule update --init --recursive --remote
 
-.PHONY: build test release update-submodule
+.PHONY: build test release update-submodule ui
