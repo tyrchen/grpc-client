@@ -18,6 +18,11 @@ interface HeaderRow {
   value: string;
 }
 
+interface StreamingRequest {
+  id: string;
+  data: any;
+}
+
 interface FormFieldProps {
   name: string;
   schema: any;
@@ -224,9 +229,14 @@ export function RequestForm() {
   const [headerRows, setHeaderRows] = useState<HeaderRow[]>([
     { id: '1', key: '', value: '' }
   ]);
+  const [streamingRequests, setStreamingRequests] = useState<StreamingRequest[]>([
+    { id: '1', data: {} }
+  ]);
   const [emitDefaults, setEmitDefaults] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'form' | 'json'>('form');
+
+  const isClientStreaming = selectedMethod?.clientStreaming || methodSchema?.streaming_type?.includes('BiDirectional') || methodSchema?.streaming_type?.includes('ClientStream');
 
   // Convert header rows to object
   const getHeadersObject = () => {
@@ -243,23 +253,39 @@ export function RequestForm() {
   useEffect(() => {
     if (viewMode === 'form') {
       try {
-        setRequestData(JSON.stringify(formData, null, 2));
+        if (isClientStreaming) {
+          // For streaming, combine all requests into an array
+          const requestArray = streamingRequests.map(req => req.data);
+          setRequestData(JSON.stringify(requestArray, null, 2));
+        } else {
+          // For non-streaming, use single form data
+          setRequestData(JSON.stringify(formData, null, 2));
+        }
       } catch {
         // If formData is invalid, keep current requestData
       }
     }
-  }, [formData, viewMode]);
+  }, [formData, streamingRequests, viewMode, isClientStreaming]);
 
   useEffect(() => {
     if (viewMode === 'json') {
       try {
         const parsed = JSON.parse(requestData);
-        setFormData(parsed);
+        if (isClientStreaming && Array.isArray(parsed)) {
+          // For streaming, convert array back to streaming requests
+          setStreamingRequests(parsed.map((data, index) => ({
+            id: (index + 1).toString(),
+            data
+          })));
+        } else if (!isClientStreaming) {
+          // For non-streaming, set single form data
+          setFormData(parsed);
+        }
       } catch {
         // If requestData is invalid JSON, keep current formData
       }
     }
-  }, [requestData, viewMode]);
+  }, [requestData, viewMode, isClientStreaming]);
 
   // Load method schema when method is selected
   useEffect(() => {
@@ -268,6 +294,7 @@ export function RequestForm() {
         setMethodSchema(null);
         setFormData({});
         setRequestData('{}');
+        setStreamingRequests([{ id: '1', data: {} }]);
         return;
       }
 
@@ -283,13 +310,21 @@ export function RequestForm() {
         if (schema.schema) {
           const initialData = generateInitialFromSchema(schema.schema);
           setFormData(initialData);
-          setRequestData(JSON.stringify(initialData, null, 2));
+
+          // For streaming methods, initialize first streaming request
+          if (schema.streaming_type?.includes('BiDirectional') || schema.streaming_type?.includes('ClientStream')) {
+            setStreamingRequests([{ id: '1', data: initialData }]);
+            setRequestData(JSON.stringify([initialData], null, 2));
+          } else {
+            setRequestData(JSON.stringify(initialData, null, 2));
+          }
         }
       } catch (err) {
         console.error('Failed to load method schema:', err);
         setMethodSchema(null);
         setFormData({});
         setRequestData('{}');
+        setStreamingRequests([{ id: '1', data: {} }]);
       }
     };
 
@@ -362,6 +397,27 @@ export function RequestForm() {
     ));
   };
 
+  // Streaming request management
+  const addStreamingRequest = () => {
+    const newRequest: StreamingRequest = {
+      id: Date.now().toString(),
+      data: methodSchema?.schema ? generateInitialFromSchema(methodSchema.schema) : {}
+    };
+    setStreamingRequests([...streamingRequests, newRequest]);
+  };
+
+  const removeStreamingRequest = (id: string) => {
+    if (streamingRequests.length > 1) {
+      setStreamingRequests(streamingRequests.filter(req => req.id !== id));
+    }
+  };
+
+  const updateStreamingRequest = (id: string, newData: any) => {
+    setStreamingRequests(streamingRequests.map(req =>
+      req.id === id ? { ...req, data: newData } : req
+    ));
+  };
+
   const handleCall = async () => {
     if (!selectedServerId || !selectedServiceName || !selectedMethodName) {
       setError('Please select a server, service, and method');
@@ -378,7 +434,13 @@ export function RequestForm() {
 
       // Use form data if in form mode, otherwise parse JSON
       if (viewMode === 'form') {
-        parsedData = formData;
+        if (isClientStreaming) {
+          // For streaming, use the array of streaming requests
+          parsedData = streamingRequests.map(req => req.data);
+        } else {
+          // For non-streaming, use single form data
+          parsedData = formData;
+        }
       } else {
         try {
           parsedData = JSON.parse(requestData);
@@ -585,28 +647,95 @@ export function RequestForm() {
               </TabsList>
 
               <TabsContent value="form" className="space-y-4 mt-4">
-                {methodSchema.schema.properties ? (
+                {isClientStreaming ? (
+                  /* Streaming Form - Multiple Requests */
                   <div className="space-y-4">
-                    {Object.entries(methodSchema.schema.properties).map(([fieldName, fieldSchema]: [string, any]) => (
-                      <FormField
-                        key={fieldName}
-                        name={fieldName}
-                        schema={fieldSchema}
-                        value={formData[fieldName]}
-                        onChange={(value) => {
-                          setFormData((prev: any) => ({
-                            ...prev,
-                            [fieldName]: value
-                          }));
-                        }}
-                        required={methodSchema.schema.required?.includes(fieldName)}
-                      />
-                    ))}
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        Client Streaming - Multiple Requests
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addStreamingRequest}
+                        className="gap-1 h-7"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add Request
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {streamingRequests.map((request, index) => (
+                        <div key={request.id} className="border rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-gray-800/50">
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm font-medium">Request #{index + 1}</div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeStreamingRequest(request.id)}
+                              disabled={streamingRequests.length === 1}
+                              className="gap-1 h-7 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Remove
+                            </Button>
+                          </div>
+
+                          {methodSchema.schema.properties ? (
+                            <div className="space-y-3">
+                              {Object.entries(methodSchema.schema.properties).map(([fieldName, fieldSchema]: [string, any]) => (
+                                <FormField
+                                  key={`${request.id}-${fieldName}`}
+                                  name={fieldName}
+                                  schema={fieldSchema}
+                                  value={request.data[fieldName]}
+                                  onChange={(value) => {
+                                    const newData = {
+                                      ...request.data,
+                                      [fieldName]: value
+                                    };
+                                    updateStreamingRequest(request.id, newData);
+                                  }}
+                                  required={methodSchema.schema.required?.includes(fieldName)}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                              No schema properties available
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <div className="p-4 text-center text-gray-500 text-sm">
-                    No schema properties available
-                  </div>
+                  /* Non-streaming Form - Single Request */
+                  methodSchema.schema.properties ? (
+                    <div className="space-y-4">
+                      {Object.entries(methodSchema.schema.properties).map(([fieldName, fieldSchema]: [string, any]) => (
+                        <FormField
+                          key={fieldName}
+                          name={fieldName}
+                          schema={fieldSchema}
+                          value={formData[fieldName]}
+                          onChange={(value) => {
+                            setFormData((prev: any) => ({
+                              ...prev,
+                              [fieldName]: value
+                            }));
+                          }}
+                          required={methodSchema.schema.required?.includes(fieldName)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No schema properties available
+                    </div>
+                  )
                 )}
               </TabsContent>
 

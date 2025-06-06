@@ -93,3 +93,5 @@ As GetUser has streaming input, please allow user to add multiple requests (by c
 }, {
   "user_id": "2"
 }]
+
+Please fix: when a new request is executed and added to history, please collapse all other history panels, and make the latest one expanded.
