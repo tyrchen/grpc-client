@@ -31,11 +31,9 @@ export interface CallRequest {
   emitDefaults?: boolean;
 }
 
-export interface CallResponse {
-  success: boolean;
-  response: any[];
-  error?: string;
-}
+// Updated to handle Vec<Value> response structure
+// Can be either an array of values (success) or an error object (failure)
+export type CallResponse = any[] | { error: string };
 
 export interface MethodSchema {
   server_id: string;

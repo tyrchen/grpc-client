@@ -81,6 +81,15 @@ Make the UI three columns:
 
 UserService should have a list of methods, but UI says no methods. Please fix it.
 
-Please put header input like the attached image. allow user input one key / value (no need for description. If they want to add more, they could click a + button to add a new row of inputs. These will be aggregated to an input object.
+Please put header input like the attached image. allow user input one key / value (no need for description). If they want to add more, they could click a + button to add a new row of inputs. These will be aggregated to an input object.
 
 Looks like request (JSON) is still a text area. Not what I expected (a form that generated based on the input schema). Can you check if input / output info are retrieved correctly? From the UI they're empty. Please check if you are using right API.
+
+I've changed call API response to return Vec<Value>, please update UI accordingly.
+
+As GetUser has streaming input, please allow user to add multiple requests (by click + button), and the UI shall put them into a list of json like this:
+[{
+  "user_id": "1"
+}, {
+  "user_id": "2"
+}]

@@ -121,7 +121,9 @@ export function CallHistory() {
       <div className="space-y-3">
         {filteredHistory.map((entry) => {
           const isExpanded = expandedItems.has(entry.id);
-          const isSuccess = entry.response.success;
+          // With Vec<Value> response, we assume success if we have a response array
+          // Error case would be an object with 'error' property
+          const isSuccess = Array.isArray(entry.response);
 
           return (
             <Card key={entry.id} className={`transition-colors ${isSuccess ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'
@@ -165,9 +167,9 @@ export function CallHistory() {
                     >
                       {isSuccess ? 'Success' : 'Error'}
                     </Badge>
-                    {entry.response.response && (
+                    {Array.isArray(entry.response) && (
                       <Badge variant="secondary" className="text-xs">
-                        {entry.response.response.length} response(s)
+                        {entry.response.length} response(s)
                       </Badge>
                     )}
                   </div>

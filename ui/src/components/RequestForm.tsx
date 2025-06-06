@@ -368,12 +368,15 @@ export function RequestForm() {
       return;
     }
 
+    let parsedData: any;
+    let startTime: number = Date.now();
+    let headersObj: Record<string, string> = {};
+
     try {
       setCallInProgress(true);
       setError(null);
 
       // Use form data if in form mode, otherwise parse JSON
-      let parsedData;
       if (viewMode === 'form') {
         parsedData = formData;
       } else {
@@ -384,12 +387,12 @@ export function RequestForm() {
         }
       }
 
-      const startTime = Date.now();
+      startTime = Date.now();
 
       // Build the method name in the format expected by the backend
       const methodPath = `${selectedServiceName}/${selectedMethodName}`;
 
-      const headersObj = getHeadersObject();
+      headersObj = getHeadersObject();
 
       const result = await apiClient.callMethod(selectedServerId, {
         method: methodPath,
@@ -400,7 +403,7 @@ export function RequestForm() {
 
       const duration = Date.now() - startTime;
 
-      // Add to call history
+      // Add to call history (successful response)
       addCallToHistory({
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         timestamp: new Date().toISOString(),
@@ -414,7 +417,23 @@ export function RequestForm() {
       });
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Call failed');
+      const duration = Date.now() - (startTime || Date.now());
+      const errorMessage = err instanceof Error ? err.message : 'Call failed';
+
+      // Add error to call history with error object as response
+      addCallToHistory({
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: new Date().toISOString(),
+        serverId: selectedServerId,
+        serviceName: selectedServiceName,
+        methodName: selectedMethodName,
+        request: parsedData || {},
+        response: { error: errorMessage } as any,
+        duration,
+        headers: headersObj || {},
+      });
+
+      setError(errorMessage);
     } finally {
       setCallInProgress(false);
     }
