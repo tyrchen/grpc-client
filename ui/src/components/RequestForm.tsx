@@ -186,15 +186,6 @@ export function RequestForm() {
     }
   };
 
-  const formatExample = () => {
-    if (methodSchema && methodSchema.requestSchema) {
-      const exampleData = generateExampleFromSchema(methodSchema.requestSchema);
-      setRequestData(JSON.stringify(exampleData, null, 2));
-    } else {
-      setRequestData('{}');
-    }
-  };
-
   if (!selectedServerId || !selectedServiceName || !selectedMethodName) {
     return (
       <Card>
@@ -261,15 +252,6 @@ export function RequestForm() {
         <CardHeader className="pb-3">
           <div className="flex justify-between items-center">
             <CardTitle className="text-base">Request Data</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={formatExample}
-              className="gap-1 h-7"
-            >
-              <RefreshCw className="w-3 h-3" />
-              Example
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -283,17 +265,6 @@ export function RequestForm() {
             </div>
           )}
 
-          {/* Request JSON */}
-          <div className="space-y-2">
-            <Label htmlFor="request-data" className="text-sm">Request (JSON)</Label>
-            <Textarea
-              id="request-data"
-              value={requestData}
-              onChange={(e) => setRequestData(e.target.value)}
-              placeholder='{"key": "value"}'
-              className="font-mono text-xs min-h-[200px]"
-            />
-          </div>
 
           {/* Headers */}
           <div className="space-y-2">
@@ -346,6 +317,19 @@ export function RequestForm() {
               ))}
             </div>
           </div>
+
+          {/* Request JSON */}
+          <div className="space-y-2">
+            <Label htmlFor="request-data" className="text-sm">Request (JSON)</Label>
+            <Textarea
+              id="request-data"
+              value={requestData}
+              onChange={(e) => setRequestData(e.target.value)}
+              placeholder='{"key": "value"}'
+              className="font-mono text-xs min-h-[200px]"
+            />
+          </div>
+
 
           {/* Options */}
           <div className="flex items-center space-x-2">
