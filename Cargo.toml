@@ -4,14 +4,59 @@ version = "0.1.0"
 authors = ["Your Name <YourName@yourdomain.com>"]
 edition = "2024"
 license = "MIT"
-documentation = "https://docs.rs/"
-repository = "https://github.com/TODO"
-homepage = "https://github.com/TODO"
-description = """
-
-"""
+documentation = "https://docs.rs/grpc-client"
+repository = "https://github.com/tyrchen/grpc-client"
+homepage = "https://github.com/tyrchen/grpc-client"
+description = "A modern gRPC command-line client written in Rust"
 readme = "README.md"
-categories = ["development-tools"]
-keywords = []
+categories = ["development-tools", "command-line-utilities"]
+keywords = ["grpc", "cli", "protobuf", "reflection", "client"]
+
+# Binary target
+[[bin]]
+name = "grpc-client"
+path = "src/main.rs"
 
 [dependencies]
+anyhow = "1.0"
+async-trait = "0.1"
+axum = { version = "0.8", features = ["http2"] }
+bytes = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.5", features = ["derive", "env"] }
+dashmap = "6"
+derive_more = { version = "2", features = ["display", "from", "into"] }
+futures = "0.3"
+http = "1.0"
+prost = "0.13"
+prost-reflect = { version = "0.15", features = ["serde"] }
+prost-types = "0.13"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0", features = ["preserve_order"] }
+serde_yaml = "0.9"
+tokio = { version = "1.45", features = ["full"] }
+tokio-stream = "0.1"
+tonic = { version = "0.13", features = ["tls-aws-lc"] }
+tonic-reflection = "0.13"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+utoipa = { version = "5.0", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-axum = "0.2"
+utoipa-swagger-ui = { version = "9.0", features = ["axum"] }
+
+[dev-dependencies]
+assert_cmd = "2.0"
+axum-test = "17"
+predicates = "3.0"
+tempfile = "3.0"
+tokio-test = "0.4"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+debug = true

@@ -1,0 +1,23 @@
+# Test API
+
+### list services
+
+GET http://localhost:4000/api/servers/user-service/services
+
+### run service
+
+POST http://localhost:4000/api/servers/user-service/call
+Content-Type: application/json
+Accept: application/json
+
+{
+  "data": {},
+  "emitDefaults": true,
+  "method": "example.UserService/ListUsers"
+}
+
+### describe service
+GET http://localhost:4000/api/servers/user-service/services/example.UserService
+
+### describe method
+GET http://localhost:4000/api/servers/user-service/services/example.UserService/methods/ListUsers

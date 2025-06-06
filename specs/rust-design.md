@@ -40,11 +40,10 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Error Handling
-thiserror = "1.0"
 anyhow = "1.0"
 
 # Utilities
-derive_more = "0.99"
+derive_more = "2"
 ```
 
 ## Core Type System Design
@@ -424,97 +423,62 @@ pub enum SecurityConfig {
 
 ## Error Handling Strategy
 
+### Simple and Pragmatic Approach
+
+**Philosophy:** Use `anyhow` throughout for simplicity and ergonomics.
+
+**Key Benefits:**
+
+- **Simplicity:** Single error type reduces cognitive overhead
+- **Ergonomics:** Excellent `?` operator support and context chaining
+- **Flexibility:** Easy to add context without defining custom error types
+- **Performance:** Zero-cost when not adding context
+
+### Error Handling Pattern
+
 ```rust
-use thiserror::Error;
+use anyhow::{Context, Result};
 
-// Comprehensive error types
-#[derive(Error, Debug)]
-pub enum GrpcurlError {
-    #[error("Connection error: {0}")]
-    Connection(#[from] ConnectionError),
+// Application-level errors
+pub type Result<T> = anyhow::Result<T>;
 
-    #[error("Schema error: {0}")]
-    Schema(#[from] SchemaError),
+// Error context chaining
+fn connect_to_server(endpoint: &str) -> Result<Channel> {
+    let endpoint = Endpoint::parse(endpoint)
+        .context("Failed to parse endpoint")?;
 
-    #[error("Parse error: {0}")]
-    Parse(#[from] ParseError),
+    let channel = create_channel(&endpoint)
+        .await
+        .with_context(|| format!("Failed to connect to {}", endpoint))?;
 
-    #[error("Format error: {0}")]
-    Format(#[from] FormatError),
-
-    #[error("gRPC error: {0}")]
-    Grpc(#[from] tonic::Status),
-
-    #[error("Configuration error: {message}")]
-    Config { message: String },
-
-    #[error("CLI error: {message}")]
-    Cli { message: String },
+    Ok(channel)
 }
 
-#[derive(Error, Debug)]
-pub enum SchemaError {
-    #[error("Reflection not supported by server")]
-    ReflectionNotSupported,
-
-    #[error("Service not found: {service}")]
-    ServiceNotFound { service: ServiceName },
-
-    #[error("Method not found: {method} in service {service}")]
-    MethodNotFound { service: ServiceName, method: MethodName },
-
-    #[error("Symbol not found: {symbol}")]
-    SymbolNotFound { symbol: String },
-
-    #[error("Invalid proto file: {file} - {reason}")]
-    InvalidProtoFile { file: PathBuf, reason: String },
-
-    #[error("Proto parsing error: {0}")]
-    ProtoParse(#[from] prost::DecodeError),
+// Error propagation with additional context
+fn handle_grpc_error(status: tonic::Status) -> anyhow::Error {
+    anyhow::anyhow!("gRPC call failed: {} (code: {:?})", status.message(), status.code())
 }
+```
 
-#[derive(Error, Debug)]
-pub enum ConnectionError {
-    #[error("Failed to connect to {endpoint}: {reason}")]
-    DialFailed { endpoint: String, reason: String },
+### Error Categories and Handling
 
-    #[error("TLS configuration error: {reason}")]
-    TlsConfig { reason: String },
+- **CLI Errors:** Invalid arguments, missing parameters → Clear user messages
+- **Network Errors:** Connection failures, timeouts → Detailed connection info
+- **gRPC Errors:** Service unavailable, method not found → gRPC status codes
+- **Parsing Errors:** Invalid JSON, malformed data → Input validation messages
+- **System Errors:** File I/O, permissions → System error context
 
-    #[error("Invalid endpoint: {endpoint}")]
-    InvalidEndpoint { endpoint: String },
+### User-Friendly Error Messages
 
-    #[error("Timeout connecting to {endpoint}")]
-    Timeout { endpoint: String },
+```rust
+// Good: Clear, actionable error messages
+Err(anyhow::anyhow!(
+    "Failed to connect to gRPC server at {}: {}\n\
+     Try checking if the server is running and accessible.",
+    endpoint, source_error
+))
 
-    #[error("Transport error: {0}")]
-    Transport(#[from] tonic::transport::Error),
-}
-
-// Extension trait for better error context
-pub trait ErrorContext<T> {
-    fn with_context(self, context: &str) -> Result<T, GrpcurlError>;
-}
-
-impl<T, E> ErrorContext<T> for Result<T, E>
-where
-    E: Into<GrpcurlError>,
-{
-    fn with_context(self, context: &str) -> Result<T, GrpcurlError> {
-        self.map_err(|e| {
-            let base_error = e.into();
-            // Wrap with additional context
-            match base_error {
-                GrpcurlError::Connection(conn_err) => {
-                    GrpcurlError::Config {
-                        message: format!("{}: {}", context, conn_err),
-                    }
-                }
-                other => other,
-            }
-        })
-    }
-}
+// Avoid: Technical error dumps without context
 ```
 
 ## Service Implementations
@@ -745,26 +709,32 @@ graph TD
 ## Key Design Decisions
 
 ### 1. Simplicity Over Flexibility
+
 - Focus on common use cases rather than edge cases
 - Clean, straightforward API without excessive abstraction
 - Easy to understand and maintain codebase
 
 ### 2. Reflection-First Approach
+
 - Primary focus on gRPC reflection for schema discovery
 - No complex multi-source abstractions initially
 - Simple to implement and covers 90% of use cases
 
 ### 3. Secure by Default
+
 - TLS enabled by default unless explicitly disabled
 - No complex security configuration options
 - Clear and safe defaults
 
 ### 4. Modern Rust Patterns
-- Clean error handling with `anyhow` for simplicity
+
+- Simple, pragmatic error handling with `anyhow` throughout
 - Minimal use of complex type-state patterns
 - Leverage `clap` derive macros for CLI parsing
+- Focus on ergonomics and maintainability over complex abstractions
 
 ### 5. JSON-First Output
+
 - Primary focus on JSON formatting (most common)
 - Text format as secondary option
 - No complex formatting abstractions
