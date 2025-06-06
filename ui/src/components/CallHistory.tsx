@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,14 @@ export function CallHistory() {
   const { callHistory, clearCallHistory } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+
+  // Auto-expand the latest entry when call history changes
+  useEffect(() => {
+    if (callHistory.length > 0) {
+      const latestEntry = callHistory[0]; // New entries are added to the beginning
+      setExpandedItems(new Set([latestEntry.id])); // Only expand the latest entry
+    }
+  }, [callHistory.length]);
 
   const filteredHistory = callHistory.filter((entry) => {
     if (!searchTerm) return true;
