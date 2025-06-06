@@ -37,19 +37,6 @@ pub struct CallRequest {
     pub emit_defaults: bool,
 }
 
-/// Response structure for gRPC method calls
-#[derive(Serialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct CallResponse {
-    /// Whether the call was successful
-    pub success: bool,
-    /// Response data from the gRPC call
-    pub response: Vec<Value>,
-    /// Error message if the call failed
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
-}
-
 /// Service information for API responses
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -244,7 +231,7 @@ pub async fn describe_service(
     ),
     request_body = CallRequest,
     responses(
-        (status = 200, description = "Method call successful", body = CallResponse),
+        (status = 200, description = "Method call successful", body = Vec<Value>),
         (status = 404, description = "Server not found", body = ErrorResponse),
         (status = 400, description = "Invalid request or connection failed", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
@@ -255,7 +242,7 @@ pub async fn call_method(
     State(state): State<AppState>,
     Path(server_id): Path<String>,
     RequestJson(request): RequestJson<CallRequest>,
-) -> Result<Json<CallResponse>, (StatusCode, Json<ErrorResponse>)> {
+) -> Result<Json<Vec<Value>>, (StatusCode, Json<ErrorResponse>)> {
     if state.get_server_config(&server_id).is_none() {
         return Err((
             StatusCode::NOT_FOUND,
@@ -292,11 +279,7 @@ pub async fn call_method(
             )
         })?;
 
-    Ok(Json(CallResponse {
-        success: true,
-        response: ret,
-        error: None,
-    }))
+    Ok(Json(ret))
 }
 
 /// Generate JSON schema for a method's input type

@@ -1,6 +1,6 @@
 use utoipa::OpenApi;
 
-use crate::server::handlers::{CallRequest, CallResponse, ErrorResponse, MethodInfo, ServiceInfo};
+use crate::server::handlers::{CallRequest, ErrorResponse, MethodInfo, ServiceInfo};
 // Note: JsonSchema and JsonSchemaProperty are excluded from OpenAPI due to recursive structure
 use crate::server::state::ServerStatus;
 
@@ -32,7 +32,6 @@ use crate::server::state::ServerStatus;
         schemas(
             ErrorResponse,
             CallRequest,
-            CallResponse,
             ServiceInfo,
             MethodInfo,
             ServerStatus,

@@ -27,9 +27,18 @@ export function MethodList() {
       setError(null);
       const methods = await apiClient.describeService(selectedServerId, selectedServiceName);
 
-      // Extract methods from the description response
+      // Extract methods from the description response and map field names
       if (methods.description && methods.description.methods) {
-        setMethods(methods.description.methods || []);
+        const mappedMethods = methods.description.methods.map((method: any) => ({
+          name: method.name,
+          inputType: method.input_type,
+          outputType: method.output_type,
+          clientStreaming: method.client_streaming,
+          serverStreaming: method.server_streaming,
+          streamingType: method.streaming_type,
+          description: method.description,
+        }));
+        setMethods(mappedMethods);
       } else {
         setMethods([]);
       }

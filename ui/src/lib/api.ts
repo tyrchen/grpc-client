@@ -38,17 +38,14 @@ export interface CallResponse {
 }
 
 export interface MethodSchema {
-  serverId: string;
-  serviceName: string;
-  methodName: string;
-  inputType: string;
-  outputType: string;
+  server_id: string;
+  service_name: string;
+  method_name: string;
+  input_type: string;
+  output_type: string;
   schema: any;
-  validationRules: any;
-  streamingType: string;
-  requestSchema?: any;
-  responseSchema?: any;
-  description?: string;
+  validation_rules: any;
+  streaming_type: string;
 }
 
 export interface ErrorResponse {
@@ -137,7 +134,7 @@ class ApiClient {
     methodName: string
   ): Promise<MethodSchema> {
     return this.request(
-      `/api/servers/${encodeURIComponent(serverId)}/services/${encodeURIComponent(serviceName)}/methods/${encodeURIComponent(methodName)}/schema`
+      `/api/servers/${encodeURIComponent(serverId)}/services/${encodeURIComponent(serviceName)}/methods/${encodeURIComponent(methodName)}`
     );
   }
 
