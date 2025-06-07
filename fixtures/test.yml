@@ -1,0 +1,8 @@
+servers:
+  user-service:
+    name: User Service
+    endpoint: grpc.acme.com:50051
+    plaintext: false
+    ca_cert: fixtures/ca.crt
+    headers: {}
+    description: Public gRPC server with reflection enabled

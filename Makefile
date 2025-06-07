@@ -7,6 +7,9 @@ ui:
 test:
 	@cargo nextest run --all-features
 
+ui-test:
+	@cd ui && yarn test
+
 release:
 	@cargo release tag --execute
 	@git cliff -o CHANGELOG.md

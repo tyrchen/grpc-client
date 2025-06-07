@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package example;
+
+// Service definition for a simple User service
+service UserService {
+  // Get user by ID
+  rpc GetUser(stream GetUserRequest) returns (stream User) {}
+
+  // Create a new user
+  rpc CreateUser(CreateUserRequest) returns (User) {}
+
+  // Update user details
+  rpc UpdateUser(UpdateUserRequest) returns (User) {}
+
+  // List users
+  rpc ListUsers(ListUsersRequest) returns (stream User) {}
+}
+
+// Request message for getting a user by ID
+message GetUserRequest {
+  string user_id = 1;
+}
+
+// Request message for creating a new user
+message CreateUserRequest {
+  User user = 1;
+}
+
+// Request message for updating a user
+message UpdateUserRequest {
+  string user_id = 1;
+  User user = 2;
+}
+
+// Request message for listing users
+message ListUsersRequest {
+  string filter = 1;
+  int32 size = 2;
+  string cursor = 3;
+}
+
+// User information
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  repeated Address addresses = 4;
+  repeated PhoneNumber phone_numbers = 5;
+
+  // Sensitive information that may need redaction
+  PaymentInfo payment_info = 6;
+  IdentityInfo identity_info = 7;
+}
+
+// Address information
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string zip = 4;
+  string country = 5;
+}
+
+// Phone number with type
+message PhoneNumber {
+  string number = 1;
+  enum PhoneType {
+    MOBILE = 0;
+    HOME = 1;
+    WORK = 2;
+  }
+  PhoneType type = 2;
+}
+
+// Payment information - this contains sensitive data
+message PaymentInfo {
+  string card_number = 1;  // Credit card number (should be redacted)
+  string expiration_date = 2;
+  string cvv = 3;  // Card verification value (should be redacted)
+}
+
+// Identity information - this contains sensitive data
+message IdentityInfo {
+  string ssn = 1;  // Social Security Number (should be redacted)
+  string drivers_license = 2;
+  string passport = 3;
+}

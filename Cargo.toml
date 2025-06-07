@@ -52,6 +52,13 @@ axum-test = "17"
 predicates = "3.0"
 tempfile = "3.0"
 tokio-test = "0.4"
+mockall = "0.13"
+wiremock = "0.6"
+criterion = { version = "0.6", features = ["html_reports"] }
+proptest = "1.5"
+serial_test = "3.0"
+sample-server = { workspace = true }
+once_cell = "1"
 
 [profile.release]
 lto = true
@@ -60,3 +67,10 @@ panic = "abort"
 
 [profile.dev]
 debug = true
+
+[workspace]
+resolver = "2"
+members = ["sample-server", "."]
+
+[workspace.dependencies]
+sample-server = { path = "sample-server" }

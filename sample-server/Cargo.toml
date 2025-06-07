@@ -1,0 +1,23 @@
+[package]
+name = "sample-server"
+version = "0.1.0"
+authors = ["Tyr Chen <tyr.chen@gmail.com>"]
+edition = "2024"
+license = "MIT"
+description = "A sample server for grpc-client"
+
+[dependencies]
+anyhow = "1"
+prost = "0.13"
+prost-types = "0.13"
+rustls = "0.23"
+serde = "1"
+tokio = "1"
+tokio-stream = "0.1"
+tonic = "0.13"
+tonic-reflection = "0.13"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[build-dependencies]
+tonic-build = "0.13"

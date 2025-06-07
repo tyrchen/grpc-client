@@ -97,3 +97,5 @@ As GetUser has streaming input, please allow user to add multiple requests (by c
 Please fix: when a new request is executed and added to history, please collapse all other history panels, and make the latest one expanded.
 
 Please update @README.md to provide a detailed guide how to use it and what's it capable. Please add images under . Please also introduce how it is being built: 1. let cursor read grpcurl code 2. generate requirement doc (@product-requirements.md ) and rust design (@rust-design.md ) 3. use memory bank to manage project. 4. implement based on memory bank plan. 5. add grpc client UI.
+
+Please update memory bank and help to check what are the next tasks?
