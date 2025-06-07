@@ -12,11 +12,6 @@ readme = "README.md"
 categories = ["development-tools", "command-line-utilities"]
 keywords = ["grpc", "cli", "protobuf", "reflection", "client"]
 
-# Binary target
-[[bin]]
-name = "grpc-client"
-path = "src/main.rs"
-
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
@@ -68,8 +63,12 @@ panic = "abort"
 [profile.dev]
 debug = true
 
+[[bin]]
+name = "grpc-client"
+path = "src/main.rs"
+
 [workspace]
-resolver = "2"
+resolver = "3"
 members = ["sample-server", "."]
 
 [workspace.dependencies]
