@@ -1,15 +1,21 @@
 servers:
-  user-service:
-    name: User Service
+  grpc-service:
+    name: Grpc Service
     endpoint: grpc.acme.com:3003
     plaintext: false
     ca_cert: fixtures/ca.crt
     headers: {}
     description: Public gRPC server with reflection enabled
-  local:
-    name: Local gRPC Server
-    endpoint: localhost:9090
-    plaintext: true
-    ca_cert: null
+  acc-service-proxy:
+    name: Acc Service Proxy
+    endpoint: acc.acme.com
+    plaintext: false
+    ca_cert: fixtures/ca.crt
     headers: {}
-    description: Local development gRPC server
+    description: Acc Service Proxy
+  acc-service:
+    name: Acc Service
+    endpoint: 127.0.0.1:50000
+    plaintext: true
+    headers: {}
+    description: Acc Service

@@ -69,6 +69,7 @@ pub trait SchemaSource: Send + Sync {
     async fn resolve_symbol(&mut self, symbol: &str) -> Result<Symbol>;
     async fn list_methods(&mut self, service: &ServiceName) -> Result<Vec<MethodDescriptor>>;
     async fn get_file_containing_symbol(&mut self, symbol: &str) -> Result<FileDescriptorProto>;
+    async fn get_file_by_filename(&mut self, name: &str) -> Result<FileDescriptorProto>;
 }
 
 pub struct ReflectionClient {
@@ -317,9 +318,9 @@ impl SchemaSource for ReflectionClient {
                     let file_desc = FileDescriptorProto::decode(&file_data[..])
                         .context("Failed to decode file descriptor")?;
 
-                    // Cache the file descriptor
+                    // Cache the file descriptor by its name for future lookups
                     self.file_cache
-                        .insert(symbol.to_string(), file_desc.clone());
+                        .insert(file_desc.name().to_string(), file_desc.clone());
                     Ok(file_desc)
                 } else {
                     anyhow::bail!("No file descriptor found for symbol: {}", symbol)
@@ -333,6 +334,40 @@ impl SchemaSource for ReflectionClient {
                 )
             }
             _ => anyhow::bail!("Unexpected response type for file containing symbol"),
+        }
+    }
+
+    async fn get_file_by_filename(&mut self, name: &str) -> Result<FileDescriptorProto> {
+        if let Some(file_desc) = self.file_cache.get(name) {
+            return Ok(file_desc.clone());
+        }
+
+        let request = MessageRequest::FileByFilename(name.to_string());
+        let response = self.make_request(request).await?;
+
+        match response {
+            MessageResponse::FileDescriptorResponse(file_response) => {
+                if let Some(file_data) = file_response.file_descriptor_proto.first() {
+                    let file_desc = FileDescriptorProto::decode(&file_data[..])
+                        .context("Failed to decode file descriptor")?;
+                    self.file_cache.insert(name.to_string(), file_desc.clone());
+                    Ok(file_desc)
+                } else {
+                    anyhow::bail!("No file descriptor found for filename: {}", name)
+                }
+            }
+            MessageResponse::ErrorResponse(error) => {
+                anyhow::bail!(
+                    "Reflection error for filename {}: {} - {}",
+                    name,
+                    error.error_code,
+                    error.error_message
+                )
+            }
+            _ => anyhow::bail!(
+                "Unexpected response type for get_file_by_filename for {}",
+                name
+            ),
         }
     }
 }

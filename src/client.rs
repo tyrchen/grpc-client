@@ -11,7 +11,7 @@ use crate::{
     },
     server::config::GrpcServerConfig,
 };
-use anyhow::{Context, Ok, Result, anyhow, bail};
+use anyhow::{Context, Result, anyhow, bail};
 use bytes::Bytes;
 use dashmap::DashMap;
 use futures::stream::{self, TryStreamExt};
@@ -20,6 +20,7 @@ use prost::Message;
 use prost_reflect::{DescriptorPool, DynamicMessage};
 use prost_types::FileDescriptorSet;
 use serde_json::Value;
+use std::collections::VecDeque;
 use std::sync::Arc;
 use tonic::{
     Code, Request, Response, Status, Streaming, client::Grpc, metadata::MetadataKey,
@@ -637,41 +638,56 @@ impl GrpcClient {
         output_type: &str,
     ) -> Result<DescriptorPool> {
         let mut reflection_client = create_reflection_client(channel);
+        let mut files_to_process = VecDeque::new();
+        let mut processed_files = std::collections::HashSet::new();
+        let mut all_file_descriptors = Vec::new();
 
-        // Get file descriptor for the input type
-        let input_file_desc = reflection_client
-            .get_file_containing_symbol(input_type)
-            .await
-            .with_context(|| {
-                format!(
-                    "Failed to get file descriptor for input type: {}",
-                    input_type
-                )
-            })?;
+        // Start with the files containing the input and output types
+        let initial_symbols = vec![input_type.to_string(), output_type.to_string()];
 
-        // Get file descriptor for the output type
-        let output_file_desc = reflection_client
-            .get_file_containing_symbol(output_type)
-            .await
-            .with_context(|| {
-                format!(
-                    "Failed to get file descriptor for output type: {}",
-                    output_type
-                )
-            })?;
-
-        // Create descriptor pool from file descriptors
-        let mut descriptor_set = FileDescriptorSet {
-            file: vec![input_file_desc.clone()],
-        };
-
-        // Add output file descriptor if different
-        if input_file_desc != output_file_desc {
-            descriptor_set.file.push(output_file_desc);
+        for symbol in initial_symbols {
+            if let Ok(file_desc) = reflection_client.get_file_containing_symbol(&symbol).await {
+                if !processed_files.contains(file_desc.name()) {
+                    files_to_process.push_back(file_desc);
+                }
+            }
         }
 
-        DescriptorPool::from_file_descriptor_set(descriptor_set)
-            .context("Failed to create descriptor pool")
+        while let Some(file_desc) = files_to_process.pop_front() {
+            let file_name = file_desc.name().to_string();
+            if processed_files.contains(&file_name) {
+                continue;
+            }
+
+            for dep in &file_desc.dependency {
+                if !processed_files.contains(dep as &str) {
+                    match reflection_client.get_file_by_filename(dep).await {
+                        Ok(dep_file_desc) => {
+                            files_to_process.push_back(dep_file_desc);
+                        }
+                        Err(e) => {
+                            if self.verbose {
+                                println!("Could not fetch dependency '{}': {}", dep, e);
+                            }
+                        }
+                    }
+                }
+            }
+
+            processed_files.insert(file_name);
+            all_file_descriptors.push(file_desc);
+        }
+
+        if all_file_descriptors.is_empty() {
+            bail!(
+                "Could not find any file descriptors for the given types. Check if reflection is enabled on the server."
+            );
+        }
+
+        DescriptorPool::from_file_descriptor_set(FileDescriptorSet {
+            file: all_file_descriptors,
+        })
+        .context("Failed to create descriptor pool")
     }
 
     fn create_grpc_request_with_headers<T>(&self, body: T) -> Result<Request<T>> {
